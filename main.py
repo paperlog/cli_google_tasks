@@ -1,5 +1,6 @@
 import os.path
 import sys
+import json
 from datetime import datetime, timezone, timedelta
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -10,6 +11,15 @@ from googleapiclient.errors import HttpError
 DEFAULT_TASKLISTS = "MDA5MzEyNzMxNzEzMjczODUxNjg6MDow"
 
 SCOPES = ["https://www.googleapis.com/auth/tasks"]
+
+def json_write(items):
+  with open("tasks.json", "w", encoding="utf-8") as f:
+    json.dump(items, f, ensure_ascii=False, indent=2)
+
+def json_read():
+  with open("tasks.json", "r", encoding="utf-8") as f:
+    items = json.load(f)
+  return items
 
 def format_due(due):
   dt = f"2026/{due}"
@@ -36,14 +46,7 @@ def login():
       token.write(creds.to_json())
   return creds
 
-def items_show(service):
-  result = service.tasks().list(tasklist=DEFAULT_TASKLISTS).execute()
-  items = result.get("items", [])
-  
-  if not items:
-    print("No task lists found.")
-    return
-  
+def items_show(items):
   print("Task")
   for item in items:
     print("---")
@@ -53,7 +56,17 @@ def items_show(service):
     print(f"期限: {due}\nタイトル: {title}\nメモ: {notes}")
   print("---\n以上")
 
-def add_item(service,title,due=None,notes=None):
+def get_items(service):
+  result = service.tasks().list(tasklist=DEFAULT_TASKLISTS).execute()
+  items = result.get("items", [])
+  
+  if not items:
+    print("No task lists found.")
+    return []
+
+  return items
+
+def make_body(title, due = None, notes = None):
   body = {"title": title}
   if due:
     dt=due.split(",")
@@ -61,6 +74,9 @@ def add_item(service,title,due=None,notes=None):
     body["due"] = format_due(due)
   if notes:
     body["notes"] = notes
+  return body
+
+def add_item(service,body):
   service.tasks().insert(tasklist=DEFAULT_TASKLISTS,body=body).execute()
   print("追加完了")
 
@@ -72,7 +88,8 @@ def main():
     args = sys.argv
 
     if len(args) == 1:
-      items_show(service)
+      items = get_items(service)
+      items_show(items)
     else:
       if args[1][0] == "-":
         print()
@@ -84,11 +101,15 @@ def main():
           due = args[2]
         if len(args)>=4:
           notes = args[3]
-        add_item(service,title,due,notes)
+        body = make_body(title,due,notes)
+        add_item(service,body)
+        items = get_items(service)
+        json_write(items)
     
   except HttpError as err:
-    print(err)
-
+    print("通信できませんでした。ローカル保存されたタスクを表示します。")    
+    items = json_read()
+    items_show(items)
 
 if __name__ == "__main__":
   main()
