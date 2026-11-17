@@ -1,4 +1,5 @@
 import os.path
+import sys
 from datetime import datetime, timezone, timedelta
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -8,7 +9,6 @@ from googleapiclient.errors import HttpError
 
 DEFAULT_TASKLISTS = "MDA5MzEyNzMxNzEzMjczODUxNjg6MDow"
 
-# If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/tasks"]
 
 def format_due(due):
@@ -66,8 +66,23 @@ def main():
   creds=login()
   try:
     service = build("tasks", "v1", credentials=creds)
-    due = "11/18,23:59"
-    add_item(service,"test",due)
+
+    args = sys.argv
+
+    if len(args) == 1:
+      items_show(service)
+    else:
+      if args[1][0] == "-":
+        print()
+      else:
+        title = args[1]
+        due = None
+        notes = None
+        if len(args)>=3:
+          due = args[2]
+        if len(args)>=4:
+          notes = args[3]
+        add_item(service,title,due,notes)
     
   except HttpError as err:
     print(err)
