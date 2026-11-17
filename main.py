@@ -6,6 +6,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+DEFAULT_TASKLISTS = "MDA5MzEyNzMxNzEzMjczODUxNjg6MDow"
+
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/tasks"]
 
@@ -28,21 +30,29 @@ def login():
       token.write(creds.to_json())
   return creds
 
+def items_show(service):
+  result = service.tasks().list(tasklist=DEFAULT_TASKLISTS).execute()
+  items = result.get("items", [])
+  
+  if not items:
+    print("No task lists found.")
+    return
+  
+  print("Task")
+  for item in items:
+    print("---")
+    due = item.get("due", "None")
+    title = item.get("title", "NoTitle")
+    notes = item.get("notes", "None")
+    print(f"期限: {due}\nタイトル: {title}\nメモ: {notes}")
+
 def main():
   creds=login()
   try:
     service = build("tasks", "v1", credentials=creds)
+
+    items_show(service)
     
-    results = service.tasklists().list(maxResults=10).execute()
-    items = results.get("items", [])
-    
-    if not items:
-      print("No task lists found.")
-      return
-    
-    print("Task lists:")
-    for item in items:
-      print(f"{item['title']} ({item['id']})")
   except HttpError as err:
     print(err)
 
