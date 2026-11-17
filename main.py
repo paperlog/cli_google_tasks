@@ -1,5 +1,5 @@
 import os.path
-
+from datetime import datetime, timezone, timedelta
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -10,6 +10,12 @@ DEFAULT_TASKLISTS = "MDA5MzEyNzMxNzEzMjczODUxNjg6MDow"
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/tasks"]
+
+def format_due(due):
+  dt = f"2026/{due}"
+  result = datetime.strptime(dt, "%Y/%m/%d,%H:%M")
+  result = result.replace(tzinfo=timezone(timedelta(hours=9)))
+  return  result.isoformat()
 
 def login():
   creds = None
@@ -47,9 +53,11 @@ def items_show(service):
     print(f"期限: {due}\nタイトル: {title}\nメモ: {notes}")
 
 def add_item(service,title,due=None,notes=None):
-  body = {"title":title}
+  body = {"title": title}
   if due:
-    body["due"] = due
+    dt=due.split(",")
+    body["title"] = f"({dt[1]}){title}"
+    body["due"] = format_due(due)
   if notes:
     body["notes"] = notes
   service.tasks().insert(tasklist=DEFAULT_TASKLISTS,body=body).execute()
@@ -58,9 +66,8 @@ def main():
   creds=login()
   try:
     service = build("tasks", "v1", credentials=creds)
-
-    items_show(service)
-    add_item(service,"test")
+    due = "11/18,23:59"
+    add_item(service,"test",due)
     
   except HttpError as err:
     print(err)
