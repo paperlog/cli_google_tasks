@@ -13,21 +13,25 @@ DEFAULT_TASKLISTS = "MDA5MzEyNzMxNzEzMjczODUxNjg6MDow"
 SCOPES = ["https://www.googleapis.com/auth/tasks"]
 
 def json_write(items):
+  """jsonファイルへの書き込み"""
   with open("tasks.json", "w", encoding="utf-8") as f:
     json.dump(items, f, ensure_ascii=False, indent=2)
 
 def json_read():
+  """jsonファイルの読み取り"""
   with open("tasks.json", "r", encoding="utf-8") as f:
     items = json.load(f)
   return items
 
 def format_due(due):
+  """日時をgoogleのtasksの形式に整形"""
   dt = f"2026/{due}"
   result = datetime.strptime(dt, "%Y/%m/%d,%H:%M")
   result = result.replace(tzinfo=timezone(timedelta(hours=9)))
   return  result.isoformat()
 
 def login():
+  """googleへのログイン、認証と認証済みであることの保存"""
   creds = None
   # ユーザーの認証情報(token.json)の確認
   if os.path.exists("token.json"):
@@ -47,6 +51,7 @@ def login():
   return creds
 
 def items_show(items):
+  """Task(items)の一覧表示"""
   print("Task")
   for item in items:
     print("---")
@@ -57,6 +62,7 @@ def items_show(items):
   print("---\n以上")
 
 def get_items(service):
+  """google tasksからタスクの一覧取得"""
   result = service.tasks().list(tasklist=DEFAULT_TASKLISTS).execute()
   items = result.get("items", [])
   
@@ -67,6 +73,7 @@ def get_items(service):
   return items
 
 def make_body(title, due = None, notes = None):
+  """title,due,notesからタスクデータの本体を作成"""
   body = {"title": title}
   if due:
     dt=due.split(",")
@@ -77,6 +84,7 @@ def make_body(title, due = None, notes = None):
   return body
 
 def add_item(service,body):
+  """google tasksにタスクを追加する"""
   service.tasks().insert(tasklist=DEFAULT_TASKLISTS,body=body).execute()
   print("追加完了")
 
@@ -85,15 +93,21 @@ def main():
   try:
     service = build("tasks", "v1", credentials=creds)
 
+    # コマンドライン引数取得
     args = sys.argv
 
     if len(args) == 1:
+      # 引数なしのときタスク一覧表示
       items = get_items(service)
       items_show(items)
+      # ローカルへタスク一覧保存
+      json_write(items)
     else:
       if args[1][0] == "-":
-        print()
+        # 事前に決めたショートカットの実行(例：-test のときtitle="test",due="次の火曜",notes="")
+        print("未実装")
       else:
+        # タスクの追加
         title = args[1]
         due = None
         notes = None
@@ -103,10 +117,12 @@ def main():
           notes = args[3]
         body = make_body(title,due,notes)
         add_item(service,body)
+        # 変更したタスク一覧取得しローカル保存
         items = get_items(service)
         json_write(items)
     
   except HttpError as err:
+    # 通信できない場合ローカル保存したデータの表示、今後編集できるようにしたい
     print("通信できませんでした。ローカル保存されたタスクを表示します。")    
     items = json_read()
     items_show(items)
