@@ -46,12 +46,21 @@ def items_show(service):
     notes = item.get("notes", "None")
     print(f"期限: {due}\nタイトル: {title}\nメモ: {notes}")
 
+def add_item(service,title,due=None,notes=None):
+  body = {"title":title}
+  if due:
+    body["due"] = due
+  if notes:
+    body["notes"] = notes
+  service.tasks().insert(tasklist=DEFAULT_TASKLISTS,body=body).execute()
+
 def main():
   creds=login()
   try:
     service = build("tasks", "v1", credentials=creds)
 
     items_show(service)
+    add_item(service,"test")
     
   except HttpError as err:
     print(err)
