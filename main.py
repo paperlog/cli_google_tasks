@@ -51,6 +51,7 @@ def items_show(service):
     title = item.get("title", "NoTitle")
     notes = item.get("notes", "None")
     print(f"期限: {due}\nタイトル: {title}\nメモ: {notes}")
+  print("---\n以上")
 
 def add_item(service,title,due=None,notes=None):
   body = {"title": title}
@@ -61,6 +62,7 @@ def add_item(service,title,due=None,notes=None):
   if notes:
     body["notes"] = notes
   service.tasks().insert(tasklist=DEFAULT_TASKLISTS,body=body).execute()
+  print("追加完了")
 
 def main():
   creds=login()
