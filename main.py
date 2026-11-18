@@ -12,19 +12,20 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TASKS_FILE = os.path.join(BASE_DIR, "tasks.json")
 TOKEN_FILE = os.path.join(BASE_DIR, "token.json")
 CREDENTIALS_FILE = os.path.join(BASE_DIR, "credentials.json")
+LOCAL_FILE = os.path.join(BASE_DIR, "local.json")
 
 DEFAULT_TASKLISTS = "MDA5MzEyNzMxNzEzMjczODUxNjg6MDow"
 
 SCOPES = ["https://www.googleapis.com/auth/tasks"]
 
-def json_write(items):
+def json_write(file_path,items):
   """jsonファイルへの書き込み"""
-  with open(TASKS_FILE, "w", encoding="utf-8") as f:
+  with open(file_path, "w", encoding="utf-8") as f:
     json.dump(items, f, ensure_ascii=False, indent=2)
 
-def json_read():
+def json_read(file_path):
   """jsonファイルの読み取り"""
-  with open(TASKS_FILE, "r", encoding="utf-8") as f:
+  with open(file_path, "r", encoding="utf-8") as f:
     items = json.load(f)
   return items
 
@@ -102,46 +103,64 @@ def make_body(title, due = None, notes = None):
 def add_item(service,body):
   """google tasksにタスクを追加する"""
   service.tasks().insert(tasklist=DEFAULT_TASKLISTS,body=body).execute()
-  print("追加完了")
+
+def synchronization(service):
+  bodys = json_read(LOCAL_FILE)
+  if not(bodys):
+    return
+  for body in bodys:
+    add_item(service,body)
+  json_write(LOCAL_FILE,[])
 
 def main():
   creds=login()
+  service = build("tasks", "v1", credentials=creds)
+
   try:
-    service = build("tasks", "v1", credentials=creds)
+    synchronization(service)
+  except HttpError as err:
+    print("通信できませんでした")
 
-    # コマンドライン引数取得
-    args = sys.argv
-
-    if len(args) == 1:
-      # 引数なしのときタスク一覧表示
+  # コマンドライン引数取得
+  args = sys.argv
+  
+  if len(args) == 1:
+    # 引数なしのときタスク一覧表示
+    try:
+      # 通信：可
       items = get_items(service)
       items_show(items)
       # ローカルへタスク一覧保存
-      json_write(items)
+      json_write(TASKS_FILE,items)
+    except HttpError as err:
+      # 通信：不可
+      items = json_read(TASKS_FILE)
+      items_show(items)
+  else:
+    if args[1][0] == "-":
+      # 事前に決めたショートカットの実行(例：-test のときtitle="test",due="次の火曜",notes="")
+      print("未実装")
     else:
-      if args[1][0] == "-":
-        # 事前に決めたショートカットの実行(例：-test のときtitle="test",due="次の火曜",notes="")
-        print("未実装")
-      else:
-        # タスクの追加
-        title = args[1]
-        due = None
-        notes = None
-        if len(args)>=3:
-          due = args[2]
-        if len(args)>=4:
-          notes = args[3]
-        body = make_body(title,due,notes)
+      # タスクの追加
+      title = args[1]
+      due = None
+      notes = None
+      if len(args)>=3:
+        due = args[2]
+      if len(args)>=4:
+        notes = args[3]
+      body = make_body(title,due,notes)
+      try:
         add_item(service,body)
         # 変更したタスク一覧取得しローカル保存
         items = get_items(service)
-        json_write(items)
-    
-  except HttpError as err:
-    # 通信できない場合ローカル保存したデータの表示、今後編集できるようにしたい
-    print("通信できませんでした。ローカル保存されたタスクを表示します。")    
-    items = json_read()
-    items_show(items)
+        json_write(TASKS_FILE,items)
+      except HttpError as err:
+        bodys = json_read(LOCAL_FILE)
+        bodys.append(body)
+        json_write(LOCAL_FILE,bodys)
+            
+      print("追加完了")
 
 if __name__ == "__main__":
   main()
