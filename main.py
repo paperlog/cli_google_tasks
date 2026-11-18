@@ -57,14 +57,25 @@ def login():
 
 def items_show(items):
   """Task(items)の一覧表示"""
-  print("Task")
+  is_due={"None":[],"Any":[]}
   for item in items:
-    print("---")
     due = item.get("due", "None")
     title = item.get("title", "NoTitle")
     notes = item.get("notes", "None")
-    print(f"期限: {due}\nタイトル: {title}\nメモ: {notes}")
-  print("---\n以上")
+    is_due.get(due,is_due["Any"]).append([due,title,notes])
+  is_due["Any"].sort()
+  print("Task\n")
+  print("- 期限あり")
+  for due, title, notes in is_due["Any"]:
+    print(f"\t- [{due[:10]}] {title}")
+    if notes!="None":
+      print(f"\t\t- {notes}")
+  print("- 期限なし")
+  for due, title, notes in is_due["None"]:
+    print(f"\t- {title}")
+    if notes!="None":
+      print(f"\t\t- {notes}")
+  print("\n以上")
 
 def get_items(service):
   """google tasksからタスクの一覧取得"""
