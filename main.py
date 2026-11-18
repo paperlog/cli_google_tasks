@@ -8,18 +8,23 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TASKS_FILE = os.path.join(BASE_DIR, "tasks.json")
+TOKEN_FILE = os.path.join(BASE_DIR, "token.json")
+CREDENTIALS_FILE = os.path.join(BASE_DIR, "credentials.json")
+
 DEFAULT_TASKLISTS = "MDA5MzEyNzMxNzEzMjczODUxNjg6MDow"
 
 SCOPES = ["https://www.googleapis.com/auth/tasks"]
 
 def json_write(items):
   """jsonファイルへの書き込み"""
-  with open("tasks.json", "w", encoding="utf-8") as f:
+  with open(TASKS_FILE, "w", encoding="utf-8") as f:
     json.dump(items, f, ensure_ascii=False, indent=2)
 
 def json_read():
   """jsonファイルの読み取り"""
-  with open("tasks.json", "r", encoding="utf-8") as f:
+  with open(TASKS_FILE, "r", encoding="utf-8") as f:
     items = json.load(f)
   return items
 
@@ -34,19 +39,19 @@ def login():
   """googleへのログイン、認証と認証済みであることの保存"""
   creds = None
   # ユーザーの認証情報(token.json)の確認
-  if os.path.exists("token.json"):
-    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+  if os.path.exists(TOKEN_FILE):
+    creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
   # token.jsonなければログイン
   if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
     else:
       flow = InstalledAppFlow.from_client_secrets_file(
-          "credentials.json", SCOPES
+          CREDENTIALS_FILE, SCOPES
       )
       creds = flow.run_local_server(port=0)
     # tokne.jsonの作成
-    with open("token.json", "w") as token:
+    with open(TOKEN_FILE, "w") as token:
       token.write(creds.to_json())
   return creds
 
