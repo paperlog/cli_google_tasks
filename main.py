@@ -118,7 +118,7 @@ def main():
 
   try:
     synchronization(service)
-  except HttpError as err:
+  except Exception as err:
     print("通信できませんでした")
 
   # コマンドライン引数取得
@@ -132,7 +132,7 @@ def main():
       items_show(items)
       # ローカルへタスク一覧保存
       json_write(TASKS_FILE,items)
-    except HttpError as err:
+    except Exception as err:
       # 通信：不可
       items = json_read(TASKS_FILE)
       items_show(items)
@@ -155,7 +155,7 @@ def main():
         # 変更したタスク一覧取得しローカル保存
         items = get_items(service)
         json_write(TASKS_FILE,items)
-      except HttpError as err:
+      except Exception as err:
         bodys = json_read(LOCAL_FILE)
         bodys.append(body)
         json_write(LOCAL_FILE,bodys)
