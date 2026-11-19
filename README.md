@@ -8,8 +8,9 @@ cli上でgoogleタスクを操作する。
 - [credentials.jsonをダウンロード](https://developers.google.com/workspace/tasks/quickstart/python?hl=ja)してmain.pyと同階層に配置する。
 
 ### 基本構文
-1. タスクの一覧表示（引数なし）
+1. タスクの一覧表示
 - `python main.py`
+- `python main.py -c` 通信せずローカルファイル閲覧
 
 2. 通常のタスク追加のパターン
 - `python main.py <タイトル> <m/d,h:m(日時)> <説明>`
