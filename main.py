@@ -32,9 +32,12 @@ def json_read(file_path):
 def format_due(due):
   """日時をgoogleのtasksの形式に整形"""
   dt = f"2026/{due}"
-  result = datetime.strptime(dt, "%Y/%m/%d,%H:%M")
-  result = result.replace(tzinfo=timezone(timedelta(hours=9)))
-  return  result.isoformat()
+  try:
+    result = datetime.strptime(dt, "%Y/%m/%d,%H:%M")
+    result = result.replace(tzinfo=timezone(timedelta(hours=9)))
+    return  result.isoformat()
+  except ValueError:
+    return None
 
 def login():
   """googleへのログイン、認証と認証済みであることの保存"""
@@ -145,8 +148,12 @@ def main():
       title = args[1]
       due = None
       notes = None
-      if len(args)>=3:
-        due = args[2]
+      if 3<=len(args) and len(args)<4:
+        due = format_due(args[2])
+        if due == None:
+          notes = args[2]
+        else:
+          due = args[2]
       if len(args)>=4:
         notes = args[3]
       body = make_body(title,due,notes)
