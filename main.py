@@ -59,6 +59,16 @@ def login():
       token.write(creds.to_json())
   return creds
 
+def init_service():
+  try:
+    creds=login()
+    service = build("tasks", "v1", credentials=creds)
+    synchronization(service)
+    return service
+  except Exception as err:
+    print("通信できませんでした")
+    return None
+
 def items_show(items):
   """Task(items)の一覧表示"""
   is_due={"None":[],"Any":[]}
@@ -116,31 +126,28 @@ def synchronization(service):
   json_write(LOCAL_FILE,[])
 
 def main():
-  creds=login()
-  service = build("tasks", "v1", credentials=creds)
-
-  try:
-    synchronization(service)
-  except Exception as err:
-    print("通信できませんでした")
-
   # コマンドライン引数取得
   args = sys.argv
   
   if len(args) == 1:
     # 引数なしのときタスク一覧表示
-    try:
-      # 通信：可
+    # 通信：可
+    service = init_service()
+    if service != None:
       items = get_items(service)
       items_show(items)
       # ローカルへタスク一覧保存
       json_write(TASKS_FILE,items)
-    except Exception as err:
+    else:
       # 通信：不可
       items = json_read(TASKS_FILE)
       items_show(items)
   else:
     if args[1][0] == "-":
+      if args[1] == "-c":
+        items = json_read(TASKS_FILE)
+        items_show(items)
+        return 0
       # 事前に決めたショートカットの実行(例：-test のときtitle="test",due="次の火曜",notes="")
       print("未実装")
     else:
@@ -148,21 +155,23 @@ def main():
       title = args[1]
       due = None
       notes = None
-      if 3<=len(args) and len(args)<4:
+      if 3==len(args):
         due = format_due(args[2])
         if due == None:
           notes = args[2]
         else:
           due = args[2]
       if len(args)>=4:
+        due = args[2]
         notes = args[3]
       body = make_body(title,due,notes)
-      try:
+      service = init_service()
+      if service != None:
         add_item(service,body)
         # 変更したタスク一覧取得しローカル保存
         items = get_items(service)
         json_write(TASKS_FILE,items)
-      except Exception as err:
+      else:
         bodys = json_read(LOCAL_FILE)
         bodys.append(body)
         json_write(LOCAL_FILE,bodys)
