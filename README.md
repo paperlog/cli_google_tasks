@@ -11,8 +11,11 @@ cli上でgoogleタスクを操作する。
 1. タスクの一覧表示（引数なし）
 `python main.py`
 
-2. 通常のタスク追加
-`python main.py <タイトル> <m/d,h,m(日時)> <説明>`
+2. 通常のタスク追加のパターン
+`python main.py <タイトル> <m/d,h:m(日時)> <説明>`
+`python main.py <タイトル>`
+`python main.py <タイトル> <m/d,h:m(日時)>`
+`python main.py <タイトル> <説明>`
 
 3. テンプレートタスクの追加
 `python main.py -<設定したショートカット名>`
