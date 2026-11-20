@@ -130,6 +130,7 @@ def add_item(service,body):
   service.tasks().insert(tasklist=DEFAULT_TASKLISTS,body=body).execute()
 
 def synchronization(service):
+  """起動時の同期処理"""
   bodys = json_read(LOCAL_FILE)
   if not(bodys):
     return
@@ -138,6 +139,7 @@ def synchronization(service):
   json_write(LOCAL_FILE,[])
 
 def shortcut(key):
+  """shortcut.jsonのショートカット参照し実行"""
   shortcuts = json_read(SHORTCUT_FILE)
   shortcut = shortcuts[key]
   title = shortcut["title"]
