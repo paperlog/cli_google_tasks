@@ -1,7 +1,7 @@
 import os.path
 import sys
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -39,6 +39,17 @@ def format_due(due):
     return  result.isoformat()
   except ValueError:
     return None
+
+def get_next_target_day(target_str):
+  target = {"月":0, "火":1, "水":2, "木":3, "金":4, "土":5, "日":6}
+  target = target[target_str]
+  today = date.today()
+  now_week = today.weekday()
+  step = target - now_week
+  if step <= 0:
+    step = 7 + step
+  target_week = today + timedelta(days=step)
+  return target_week.isoformat().split("-")
 
 def login():
   """googleへのログイン、認証と認証済みであることの保存"""
@@ -130,7 +141,13 @@ def shortcut(key):
   shortcuts = json_read(SHORTCUT_FILE)
   shortcut = shortcuts[key]
   title = shortcut["title"]
+  
   due = shortcut["due"]
+  d = due["day"]
+  t = due["time"]
+  day = get_next_target_day(d)
+  due = f"{day[1]}/{day[2]},"+t
+  
   notes = shortcut["notes"]
   body = make_body(title,due,notes)
   service = init_service()
