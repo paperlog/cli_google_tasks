@@ -13,6 +13,7 @@ TASKS_FILE = os.path.join(BASE_DIR, "tasks.json")
 TOKEN_FILE = os.path.join(BASE_DIR, "token.json")
 CREDENTIALS_FILE = os.path.join(BASE_DIR, "credentials.json")
 LOCAL_FILE = os.path.join(BASE_DIR, "local.json")
+SHORTCUT_FILE = os.path.join(BASE_DIR, "shortcut.json")
 
 DEFAULT_TASKLISTS = "MDA5MzEyNzMxNzEzMjczODUxNjg6MDow"
 
@@ -125,6 +126,25 @@ def synchronization(service):
     add_item(service,body)
   json_write(LOCAL_FILE,[])
 
+def shortcut(key):
+  shortcuts = json_read(SHORTCUT_FILE)
+  shortcut = shortcuts[key]
+  title = shortcut["title"]
+  due = shortcut["due"]
+  notes = shortcut["notes"]
+  body = make_body(title,due,notes)
+  service = init_service()
+  if service != None:
+    add_item(service,body)
+    # 変更したタスク一覧取得しローカル保存
+    items = get_items(service)
+    json_write(TASKS_FILE,items)
+  else:
+    bodys = json_read(LOCAL_FILE)
+    bodys.append(body)
+    json_write(LOCAL_FILE,bodys)
+  print("追加完了")
+
 def main():
   # コマンドライン引数取得
   args = sys.argv
@@ -149,7 +169,7 @@ def main():
         items_show(items)
         return 0
       # 事前に決めたショートカットの実行(例：-test のときtitle="test",due="次の火曜",notes="")
-      print("未実装")
+      shortcut(args[1])
     else:
       # タスクの追加
       title = args[1]
