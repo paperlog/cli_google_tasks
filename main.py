@@ -187,6 +187,13 @@ def main():
         items = json_read(TASKS_FILE)
         items_show(items)
         return 0
+      if args[1] == "-h" or "--help":
+        print("-h/--help : このヘルプ表示")
+        print("-c : ローカルjson読み込み")
+        shortcuts = json_read(SHORTCUT_FILE)
+        for key in shortcuts.keys():
+          print(key,":",shortcuts[key]["title"])
+        return 0
       # 事前に決めたショートカットの実行(例：-test のときtitle="test",due="次の火曜",notes="")
       shortcut(args[1])
     else:
