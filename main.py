@@ -187,7 +187,7 @@ def main():
         items = json_read(TASKS_FILE)
         items_show(items)
         return 0
-      if args[1] == "-h" or "--help":
+      if args[1] == "-h" or args[1] == "-- help":
         print("-h/--help : このヘルプ表示")
         print("-c : ローカルjson読み込み")
         shortcuts = json_read(SHORTCUT_FILE)
